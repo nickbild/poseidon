@@ -65,7 +65,7 @@ class Net(nn.Module):
         self.bn4 = nn.BatchNorm1d(512)
         self.pool4 = nn.MaxPool1d(4)
         self.avgPool = nn.AvgPool1d(30)
-        self.fc1 = nn.Linear(512, 10)
+        self.fc1 = nn.Linear(512, 2)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -111,12 +111,25 @@ def test(model, epoch):
         data = data.to(device)
         target = target.to(device)
         output = model(data)
+        #print(output)
         output = output.permute(1, 0, 2)
+        print(output)
         pred = output.max(2)[1]
+        print(pred)
         correct += pred.eq(target).cpu().sum().item()
+
+    #if correct >= max_accuracy:
+    #    max_accuracy = correct
+    #    save_models(epoch, correct)
+
     print('\nTest set: Accuracy: {}/{} ({:.0f}%)\n'.format(
         correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
+
+
+def save_models(epoch, test_acc):
+    torch.save(model.state_dict(), "poseidon_{}_{}.model".format(epoch, test_acc))
+    print("Model saved.")
 
 
 if __name__ == "__main__":
@@ -143,10 +156,11 @@ if __name__ == "__main__":
     model.to(device)
 
     optimizer = optim.Adam(model.parameters(), lr = 0.01, weight_decay = 0.0001)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = 20, gamma = 0.1)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = 50, gamma = 0.1)
 
+    max_accuracy = 0
     log_interval = 20
-    for epoch in range(1, 41):
+    for epoch in range(1, 50001):
         scheduler.step()
         train(model, epoch)
         test(model, epoch)

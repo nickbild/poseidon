@@ -3,9 +3,9 @@ import wave
 import time
 
 
-BATCH = 1
-DESTINATION = "data/test/2"
-samples = 20
+BATCH = 3
+DESTINATION = "data/train/1"
+samples = 50
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
