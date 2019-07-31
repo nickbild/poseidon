@@ -28,7 +28,7 @@ class CommandDataset(Dataset):
                         self.labels.append(int(label))
                         self.file_names.append(file_path + "/" + label + "/" + file)
 
-        self.mixer = torchaudio.transforms.DownmixMono()
+        self.mixer = torchaudio.transforms.DownmixMono(channels_first=True)
 
     def __getitem__(self, index):
         path = self.file_names[index]
@@ -37,10 +37,18 @@ class CommandDataset(Dataset):
         sound = torchaudio.load(path, out = None, normalization = True)
         soundData = self.mixer(sound[0]) # Mono
 
-        # Audio is 44100 Hz, so 30K samples = 0.68s
-        # Downsample 1/3rd = ~ 2s audio time.
-        soundFormatted = torch.zeros([30000, 1])
-        soundFormatted[:30000] = soundData[::3]
+        # Pad tensor for minimum size of 88064 frames (2s, 44,100 Hz).
+        if soundData.shape[1] < 88064:
+            padded = torch.zeros(1, 88064)
+            padded[:, :soundData.shape[1]] = soundData
+            soundData = padded
+
+        soundData = soundData.view(88064, -1)
+
+        # Audio is 44100 Hz, so 29,355 samples = 0.66s
+        # Downsample 1/3rd = 2s audio time.
+        soundFormatted = torch.zeros([29355, 1])
+        soundFormatted[:29355] = soundData[::3]
         soundFormatted = soundFormatted.permute(1, 0)
 
         return soundFormatted, self.labels[index]
@@ -118,8 +126,10 @@ def test(model, epoch):
         data = data.to(device)
         target = target.to(device)
         output = model(data)
+        #print(output)
         output = output.permute(1, 0, 2)
         pred = output.max(2)[1]
+        #print(pred)
         correct += pred.eq(target).cpu().sum().item()
 
     #if correct >= max_accuracy:
