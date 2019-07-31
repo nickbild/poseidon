@@ -9,10 +9,10 @@ from torch.utils.data import Dataset
 import torchaudio
 import pandas as pd
 import numpy as np
-import IPython.display as ipd
 import re
 
 
+#import IPython.display as ipd
 # Play wav file.
 # ipd.Audio('path/to/file.wav')
 
@@ -88,6 +88,8 @@ class Net(nn.Module):
 
 def train(model, epoch):
     model.train()
+    train_acc = 0
+
     for batch_idx, (data, target) in enumerate(train_loader):
         optimizer.zero_grad()
         data = data.to(device)
@@ -98,10 +100,13 @@ def train(model, epoch):
         loss = F.nll_loss(output[0], target)
         loss.backward()
         optimizer.step()
-        if batch_idx % log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss))
+
+        _, prediction = torch.max(output.data, 2)
+        train_acc += torch.sum(prediction == target.data)
+
+        print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f} Acc: {}'.format(
+            epoch, batch_idx * len(data), len(train_loader.dataset),
+            100. * batch_idx / len(train_loader), loss, train_acc))
 
 
 def test(model, epoch):
@@ -111,11 +116,8 @@ def test(model, epoch):
         data = data.to(device)
         target = target.to(device)
         output = model(data)
-        #print(output)
         output = output.permute(1, 0, 2)
-        print(output)
         pred = output.max(2)[1]
-        print(pred)
         correct += pred.eq(target).cpu().sum().item()
 
     #if correct >= max_accuracy:
@@ -159,7 +161,6 @@ if __name__ == "__main__":
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = 50, gamma = 0.1)
 
     max_accuracy = 0
-    log_interval = 20
     for epoch in range(1, 50001):
         scheduler.step()
         train(model, epoch)
