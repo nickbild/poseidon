@@ -104,9 +104,11 @@ def train(model, epoch):
         _, prediction = torch.max(output.data, 2)
         train_acc += torch.sum(prediction == target.data)
 
-        print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f} Acc: {}'.format(
+        train_acc_pct = "{0:.2f}".format((float(train_acc) / float(len(train_loader.dataset))) * 100.0)
+
+        print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f} Acc: {} ({}%)'.format(
             epoch, batch_idx * len(data), len(train_loader.dataset),
-            100. * batch_idx / len(train_loader), loss, train_acc))
+            100. * batch_idx / len(train_loader), loss, train_acc, train_acc_pct))
 
 
 def test(model, epoch):
@@ -158,7 +160,7 @@ if __name__ == "__main__":
     model.to(device)
 
     optimizer = optim.Adam(model.parameters(), lr = 0.01, weight_decay = 0.0001)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = 50, gamma = 0.1)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = 100, gamma = 0.1)
 
     max_accuracy = 0
     for epoch in range(1, 50001):
