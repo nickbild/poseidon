@@ -14,6 +14,7 @@ cd audio
 git checkout d92de5b
 python3 setup.py install
 
+cd ..
 git clone https://github.com/nickbild/poseidon.git
 cd poseidon
 source pytorch_p36
