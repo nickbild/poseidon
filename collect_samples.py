@@ -3,7 +3,7 @@ import wave
 import time
 
 
-BATCH = 3
+BATCH = 5
 DESTINATION = "data/train/1"
 samples = 50
 
