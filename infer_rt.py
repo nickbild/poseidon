@@ -1,10 +1,12 @@
 import torch
 import torchaudio
 from train import Net
+import pyaudio
+import wave
 
 
 trained_model = "poseidon_5_97.67441860465117.model"
-image_file = "data/test/0/4_18.wav"
+wav_file = "rt_audio.wav" #"data/test/0/4_18.wav"
 
 device = "cpu"
 if torch.cuda.is_available():
@@ -18,10 +20,11 @@ model.eval()
 
 
 def main():
-    data = load_img_to_tensor(image_file)
-    prediction = predict_class(data)
-
-    print(prediction)
+    while True:
+        record_wav()
+        data = load_img_to_tensor(wav_file)
+        prediction, score = predict_class(data)
+        print("{} {}".format(prediction, score))
 
 
 def load_img_to_tensor(img):
@@ -55,8 +58,44 @@ def predict_class(data):
     output = model(data)
     output = output.permute(1, 0, 2)
     pred = output.max(2)[1].item()
+    score = output.max(2)[0].item()
 
-    return pred
+    return pred, score
+
+
+def record_wav():
+    CHUNK = 1024
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 2
+    RATE = 44100
+    RECORD_SECONDS = 2
+
+    p = pyaudio.PyAudio()
+    stream = p.open(format=FORMAT,
+                    channels=CHANNELS,
+                    rate=RATE,
+                    input=True,
+                    frames_per_buffer=CHUNK)
+
+    print("* Recording...")
+
+    frames = []
+
+    for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+        data = stream.read(CHUNK)
+        frames.append(data)
+
+    print("Done recording")
+
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
+
+    wf = wave.open(wav_file, 'wb')
+    wf.setnchannels(CHANNELS)
+    wf.setsampwidth(p.get_sample_size(FORMAT))
+    wf.setframerate(RATE)
+    wf.writeframes(b''.join(frames))
 
 
 if __name__ == "__main__":
