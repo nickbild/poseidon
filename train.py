@@ -37,7 +37,7 @@ class CommandDataset(Dataset):
         sound = torchaudio.load(path, out = None, normalization = True)
         soundData = self.mixer(sound[0]) # Mono
 
-        # Pad tensor for minimum size of 88064 frames (2s, 44,100 Hz).
+        # Pad tensor for minimum size of 88,064 frames (2s, 44,100 Hz).
         if soundData.shape[1] < 88064:
             padded = torch.zeros(1, 88064)
             padded[:, :soundData.shape[1]] = soundData
@@ -119,30 +119,30 @@ def train(model, epoch):
             100. * batch_idx / len(train_loader), loss, train_acc, train_acc_pct))
 
 
-def test(model, epoch):
+def test(model, epoch, max_accuracy):
     model.eval()
     correct = 0
     for data, target in test_loader:
         data = data.to(device)
         target = target.to(device)
         output = model(data)
-        #print(output)
         output = output.permute(1, 0, 2)
         pred = output.max(2)[1]
-        #print(pred)
         correct += pred.eq(target).cpu().sum().item()
 
-    #if correct >= max_accuracy:
-    #    max_accuracy = correct
-    #    save_models(epoch, correct)
+    if correct >= max_accuracy:
+       max_accuracy = correct
+       save_models(epoch, 100. * correct / len(test_loader.dataset))
 
     print('\nTest set: Accuracy: {}/{} ({:.0f}%)\n'.format(
         correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
 
+    return max_accuracy
 
-def save_models(epoch, test_acc):
-    torch.save(model.state_dict(), "poseidon_{}_{}.model".format(epoch, test_acc))
+
+def save_models(epoch, test_acc_pct):
+    torch.save(model.state_dict(), "poseidon_{}_{}.model".format(epoch, test_acc_pct))
     print("Model saved.")
 
 
@@ -169,11 +169,11 @@ if __name__ == "__main__":
     model = Net()
     model.to(device)
 
-    optimizer = optim.Adam(model.parameters(), lr = 0.01, weight_decay = 0.0001)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = 100, gamma = 0.1)
+    optimizer = optim.Adam(model.parameters(), lr = 0.00001, weight_decay = 0.0001)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = 20, gamma = 0.1)
 
     max_accuracy = 0
     for epoch in range(1, 50001):
         scheduler.step()
         train(model, epoch)
-        test(model, epoch)
+        max_accuracy = test(model, epoch, max_accuracy)
