@@ -5,20 +5,24 @@ import pyaudio
 import wave
 
 
-trained_model = "poseidon_5_97.1875.model"
-wav_file = "rt_audio.wav" #"data/test/0/4_18.wav"
-
-device = "cpu"
-if torch.cuda.is_available():
-    device = "cuda"
+trained_model = "poseidon_85_98.125.model"
+wav_file = "rt_audio.wav"
 
 lookup = []
 lookup.append("Hey, Google")
 lookup.append("Alexa")
 lookup.append("Background Noise")
 
+
+device = "cpu"
+if torch.cuda.is_available():
+    device = "cuda"
+
 # Load the saved model.
-checkpoint = torch.load(trained_model)
+if device == "cuda":
+    checkpoint = torch.load(trained_model)
+else:
+    checkpoint = torch.load(trained_model, map_location='cpu')
 model = Net()
 model.load_state_dict(checkpoint)
 model.eval()
