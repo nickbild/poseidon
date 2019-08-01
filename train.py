@@ -73,7 +73,7 @@ class Net(nn.Module):
         self.bn4 = nn.BatchNorm1d(512)
         self.pool4 = nn.MaxPool1d(4)
         self.avgPool = nn.AvgPool1d(30)
-        self.fc1 = nn.Linear(512, 2)
+        self.fc1 = nn.Linear(512, 3)
 
     def forward(self, x):
         x = self.conv1(x)
