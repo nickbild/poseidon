@@ -60,7 +60,7 @@ class CommandDataset(Dataset):
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.dropout = nn.Dropout(0.3)
+        self.dropout = nn.Dropout(0.35)
 
         self.conv1 = nn.Conv1d(1, 128, 80, 4)
         self.bn1 = nn.BatchNorm1d(128)
@@ -82,7 +82,6 @@ class Net(nn.Module):
         x = self.conv1(x)
         x = F.relu(self.bn1(x))
         x = self.pool1(x)
-        x = self.dropout(x)
         x = self.conv2(x)
         x = F.relu(self.bn2(x))
         x = self.pool2(x)
@@ -90,7 +89,6 @@ class Net(nn.Module):
         x = self.conv3(x)
         x = F.relu(self.bn3(x))
         x = self.pool3(x)
-        x = self.dropout(x)
         x = self.conv4(x)
         x = F.relu(self.bn4(x))
         x = self.pool4(x)
@@ -124,8 +122,8 @@ def train(model, epoch):
         train_acc_pct = "{0:.2f}".format((float(train_acc) / float(len(train_loader.dataset))) * 100.0)
 
         print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f} Acc: {} ({}%)'.format(
-            epoch, batch_idx * len(data), len(train_loader.dataset),
-            100. * batch_idx / len(train_loader), loss, train_acc, train_acc_pct))
+            epoch, (batch_idx+1) * len(data), len(train_loader.dataset),
+            100. * (batch_idx+1) / len(train_loader), loss, train_acc, train_acc_pct))
 
 
 def test(model, epoch, max_accuracy):
@@ -178,8 +176,8 @@ if __name__ == "__main__":
     model = Net()
     model.to(device)
 
-    optimizer = optim.Adam(model.parameters(), lr = 0.000001, weight_decay = 0.0001)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = 20, gamma = 0.1)
+    optimizer = optim.Adam(model.parameters(), lr = 0.000005, weight_decay = 0.0001)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = 40, gamma = 0.1)
 
     max_accuracy = 0
     for epoch in range(1, 50001):
