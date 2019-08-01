@@ -5,12 +5,17 @@ import pyaudio
 import wave
 
 
-trained_model = "poseidon_5_97.67441860465117.model"
+trained_model = "poseidon_5_97.1875.model"
 wav_file = "rt_audio.wav" #"data/test/0/4_18.wav"
 
 device = "cpu"
 if torch.cuda.is_available():
     device = "cuda"
+
+lookup = []
+lookup.append("Hey, Google")
+lookup.append("Alexa")
+lookup.append("Background Noise")
 
 # Load the saved model.
 checkpoint = torch.load(trained_model)
@@ -23,8 +28,9 @@ def main():
     while True:
         record_wav()
         data = load_img_to_tensor(wav_file)
+
         prediction, score = predict_class(data)
-        print("{} {}".format(prediction, score))
+        print("{} {}".format(lookup[prediction], score))
 
 
 def load_img_to_tensor(img):
